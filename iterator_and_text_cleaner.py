@@ -30,12 +30,12 @@ class NewsIterator(object):
                     yield words
 
 class SimpleIterator(object):
-    def __init__(self, dirname):
-        self.dirname = dirname
+    def __init__(self, file_list):
+        self.file_list = file_list
 
     def __iter__(self):
-        for fname in os.listdir(self.dirname):
-            with open(self.dirname + fname) as f:
+        for fname in self.file_list:
+            with open(fname) as f:
                 words = non_alpha_cleaner(f.read()).lower().split()
                 if len(words) < 800:
                     yield words
@@ -65,11 +65,14 @@ def article_matrix(w2v_model, filename, shape):
                     break
     return word_matrix
 
-def article_indices(word2index, filename, num_words):
+def article_indices(word2index, filename, num_words, case_sensitive=False):
     i = 0
     windices = np.zeros(num_words, dtype=np.int)
     with open(filename) as f:
-        words = non_alpha_cleaner(f.read()).lower().split()
+        if case_sensitive:
+            words = non_alpha_cleaner(f.read()).split()
+        else:
+            words = non_alpha_cleaner(f.read()).lower().split()
         for word in words:
             if word in word2index:
                 windices[i] = word2index[word]
@@ -77,6 +80,19 @@ def article_indices(word2index, filename, num_words):
                 if i == num_words:
                     break
     return windices
+
+def article_indices_variable(word2index, filename, max_words):
+    i = 0
+    windices = []
+    with open(filename) as f:
+        words = non_alpha_cleaner(f.read()).lower().split()
+        for word in words:
+            if word in word2index:
+                windices.append(word2index[word])
+                i += 1
+                if i == max_words:
+                    break
+    return np.array(windices)
 
 def text_indices(word2index, text, num_words):
     i = 0
